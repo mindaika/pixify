@@ -5,4 +5,4 @@ from werkzeug.utils import secure_filename
 @app.route('/api/status')
 def api_status():
     """Health check endpoint"""
-    return jsonify({"status": "ok"})
+    return jsonify({"status": "okeydokey"})
