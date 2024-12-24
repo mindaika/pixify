@@ -1,8 +1,6 @@
-import os
-from flask import Flask, request, jsonify, send_from_directory
-from werkzeug.utils import secure_filename
+from __init__ import create_app
 
-@app.route('/api/status')
-def api_status():
-    """Health check endpoint"""
-    return jsonify({"status": "okeydokey"})
+app = create_app()
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5005)
