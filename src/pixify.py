@@ -30,7 +30,6 @@ from tkinter import ttk
 # Third-party imports
 import openai
 import requests
-from dotenv import load_dotenv
 from openai import OpenAI
 from PIL import Image, UnidentifiedImageError
 from PIL.ImageFile import ImageFile
