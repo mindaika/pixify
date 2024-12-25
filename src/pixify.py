@@ -34,6 +34,8 @@ from openai import OpenAI
 from PIL import Image, UnidentifiedImageError
 from PIL.ImageFile import ImageFile
 
+import load_dotenv
+
 
 # Load an image from a file
 def load_image(image_path):
@@ -153,7 +155,7 @@ def generate_image(prompt: str):
     Raises:
         Exception: If there is an error during the image generation process.
     """
-    load_dotenv()
+    load_dotenv.load_dotenv()
     OpenAI.api_key = os.getenv("OPENAI_API_KEY")
     client = OpenAI()
 
