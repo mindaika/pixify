@@ -23,7 +23,7 @@ RUN chown -R appuser:appuser /app
 USER appuser
 
 HEALTHCHECK --interval=30s --timeout=30s --start-period=60s --retries=3 \
-    CMD curl -f https://garbanzo.monster/pixify/api/status || exit 1
+    CMD curl -f http://localhost:5005/api/status || exit 1
 
 EXPOSE 5005
 
