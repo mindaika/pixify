@@ -1,27 +1,26 @@
+# Simplified ARM64 Flask Dockerfile
 FROM python:3.11-slim
-
-# Multi-arch build arguments (automatically provided by buildx)
-ARG TARGETPLATFORM
-ARG BUILDPLATFORM
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
-    FLASK_ENV=production
+    FLASK_ENV=production \
+    PYTHONPATH=/app
 
-# Install system dependencies including build tools for ARM
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     curl \
     build-essential \
     libffi-dev \
     libssl-dev \
     pkg-config \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
 
 # Create non-root user
-RUN useradd --create-home --shell /bin/bash appuser
+RUN useradd --create-home --shell /bin/bash --uid 1000 appuser
 
 # Set working directory
 WORKDIR /app
@@ -30,9 +29,13 @@ WORKDIR /app
 COPY pyproject.toml poetry.lock* ./
 
 # Install poetry and dependencies
-RUN pip install poetry && \
+RUN pip install --no-cache-dir poetry==1.7.1 && \
     poetry config virtualenvs.create false && \
-    poetry install --only=main --no-interaction --no-ansi --no-root
+    poetry config installer.max-workers 2 && \
+    poetry config installer.parallel true
+
+# Install dependencies with longer timeout
+RUN poetry install --only=main --no-interaction --no-ansi --no-root --timeout=600
 
 # Copy application code
 COPY src/ ./src/
@@ -42,11 +45,22 @@ RUN chown -R appuser:appuser /app
 USER appuser
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=15s --start-period=60s --retries=3 \
     CMD curl -f http://localhost:5005/api/status || exit 1
 
-# Expose port
+# Expose port (adjust for each service)
 EXPOSE 5005
 
 # Use gunicorn for production
-CMD ["gunicorn", "--bind", "0.0.0.0:5005", "--workers", "2", "--timeout", "60", "--access-logfile", "-", "src:create_app()"]
+CMD ["gunicorn", \
+     "--bind", "0.0.0.0:5005", \
+     "--workers", "2", \
+     "--worker-class", "sync", \
+     "--timeout", "120", \
+     "--keepalive", "5", \
+     "--max-requests", "1000", \
+     "--max-requests-jitter", "100", \
+     "--access-logfile", "-", \
+     "--error-logfile", "-", \
+     "--log-level", "info", \
+     "src:create_app()"]
