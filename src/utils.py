@@ -7,6 +7,7 @@ import requests
 from io import BytesIO
 from PIL import Image, UnidentifiedImageError
 from openai import OpenAI
+from .secrets import get_openai_api_key
 
 class ImageProcessor:
     """Handles image generation and pixellation using OpenAI API."""
@@ -16,9 +17,14 @@ class ImageProcessor:
         Initialize the ImageProcessor with OpenAI API key.
 
         Args:
-            api_key: OpenAI API key (defaults to OPENAI_API_KEY env var)
+            api_key: OpenAI API key (defaults to Docker secret or OPENAI_API_KEY env var)
         """
-        self.api_key = api_key or os.getenv("OPENAI_API_KEY")
+        if api_key:
+            self.api_key = api_key
+        else:
+            # Read from Docker secret file or fall back to environment variable
+            self.api_key = get_openai_api_key()
+
         if not self.api_key:
             raise ValueError("OpenAI API key is required")
         self.client = OpenAI(api_key=self.api_key)
